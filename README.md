@@ -1,4 +1,4 @@
-# `stockquotes` - Python interface to stock quotes providers
+# Python interface to stock quotes providers
 
 Version 0.1 (initial release)
 
@@ -6,7 +6,7 @@ Version 0.1 (initial release)
 
 ## Usage summary
 
-`Stocks` class creates and maintains a dictionary of traded securities quotes. Currently supported API providers are Yahoo Finance API and MOEX. Currently stored values are the current price and the change to previous close. The price is stored in the currency of the security for a nominal of 1. The change is stored as a fraction of the price, i.e. a change of 2% will be stored as 0.02.
+`Stocks` class creates and maintains a dictionary of traded securities quotes. Currently supported API providers are Yahoo Finance API and MOEX. Stored values are the current price and the change to previous close. The price is stored in the currency of the security for a nominal of 1. The change is stored as a fraction of the price, i.e. a change of 2% will be stored as 0.02.
 
 Use `append(ticker, api)` method to fill it with individual stock quotes. 
 
@@ -58,7 +58,7 @@ The returned value is the `key` to the the internal dictionary for the record of
 
 `remove(ticker:str, api:str = "YF")` - removes the quote for the `ticker`. `ticker` and `api` are the same as when calling `append()`. If there is no entry for the ticker/api pair in the internal database, `remove()` returns silently.
 
-`maintain(interval:int)` - start updating stock quotes at regular intervals (in seconds). This method forkes a thread that keeps calling the relevant APIs and updating the internal dictionary with new data. Use `desist()` to stop.
+`maintain(interval:int)` - start updating stock quotes at regular intervals (in seconds). This method forks a thread that keeps calling the relevant APIs and updating the internal dictionary with new data. Use `desist()` to stop.
 
 `desist()` - stop updating stock quotes.
 
@@ -86,9 +86,10 @@ Add quotes with `append()` and then use them without updating. Sample code:
 	stocks = Stocks()
 	applKey = stocks.append("AAPL")
 	
-	print(stocks.getCompanyName(applKey), end=" ")
-	print(stocks.getPrice(applKey), end=" ")
-	print(stocks.getPriceChng(applKey))
+	print("Stock quote for AAPL")
+	print("Name   = " + stocks.getCompanyName(key))
+	print("Price  = {0:.2f}".format(stocks.getPrice(key)))
+	print("Change = {0:.2f}%".format(stocks.getPriceChng(key)*100))
 
 #### Dynamic
 Add quotes with `append()` and then keep them alive to use in some dymnamic way like plotting real-time price graphs or directing business logic. Sample code:
@@ -118,4 +119,4 @@ Add quotes with `append()` and then keep them alive to use in some dymnamic way 
 
 Avoid iterating through an instance of `Stocks` class in more than one thread at a time. Use [barrier objects](https://docs.python.org/3/library/threading.html?highlight=barriers#barrier-objects) or other means of resource mutual exclusion to contol this in your code.
 
-The methods of the `Stocks` class itself do not use the implemented iterator. For instance, `maintain()` or `__str__()` methods though iterating through the records in the internal dictionary, use other means for this. You can use these methods safely in your multi-threaded applications.
+The methods of the `Stocks` class itself do not use the implemented iterator. For instance, `maintain()` or `__str__()` methods though iterating through the records in the internal dictionary, use other means for this. You can use these methods (almost) safely in your multi-threaded applications as long as you avoid `remove()`-ing. If you need to `remove()` a quote while `maintain()`-ing, call `desist()` first to pause the updates, then call `remove()` and invoke `miantain()` again.

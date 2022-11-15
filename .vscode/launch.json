@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["--dry", "MiniStocks.xlsx"],
+            "args": [],
             "console": "integratedTerminal",
             "justMyCode": true
         }
