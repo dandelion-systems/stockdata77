@@ -1,0 +1,121 @@
+# `stockquotes` - Python interface to stock quotes providers
+
+Version 0.1 (initial release)
+
+`stockquotes` provides the `Stocks` class which facilitates interfacing with real-time information providers of securities trading data. Currently it supports APIs of Yahoo Finance and MOEX. It is designed primarily to be used with stock and ETF symbols.
+
+## Usage summary
+
+`Stocks` class creates and maintains a dictionary of traded securities quotes. Currently supported API providers are Yahoo Finance API and MOEX. Currently stored values are the current price and the change to previous close. The price is stored in the currency of the security for a nominal of 1. The change is stored as a fraction of the price, i.e. a change of 2% will be stored as 0.02.
+
+Use `append(ticker, api)` method to fill it with individual stock quotes. 
+
+Once you have all the quotes you need, you can use `Stocks[key]` to obtain trading data as a list of values. Alternatively, call individual `getXXXXXX()` methods to obtain various components of the list. Prior to calling any of these you can use the `in` operator to check if a `key` has a corresponding record.
+
+The `key` is composed out of the stock ticker and the name of the API provider. `makeKey(ticker, api)` will 
+get you the `key`. Or you can simply store the value returned by `append()` or `update()`. Use `splitKey()` to reverse `makeKey()`.
+
+The instances of the `Stocks` class are iterable. Trying this code
+
+	import stockquotes
+
+	stocks = Stocks()
+	stocks.append("AAPL")
+	stocks.append("U")
+	for entry in stocks:
+		print(entry)
+
+will print tuples of `(key, [name, price, change])` like this:
+
+	('AAPL:YF', ['Apple Inc.', 155.74, 0.0755525])
+	('U:YF', ['Unity Software Inc.', 29.23, 0.048421822])
+
+Attempting to cast the whole instance to `str` type will get you a formatted table with the current quotes. For instance appending 
+
+	print(stocks)
+
+to the example above will get you this:
+
+	TICKER      NAME                PRICE    CHANGE 
+	----------- ------------------- -------- ---------
+	AAPL:YF     Apple Inc.            155.74     7.56%
+	U:YF        Unity Software ...     29.23     4.84%
+
+Use `maintain(interval)` to fork a thread that updates the quotes at the given intervals in seconds. Invoking `desist()` will stop the updates. See the included `sample_cli.py` script for an example.
+
+## `Stocks` class methods
+
+> `Stocks` class does not expose any fields. Use the methods described below to obtain the necessary. In addition to these you can iterate through an instance of `Stocks`, read individual records by indexing it with a `key` (see `append()` for the explanation of keys), and cast it to `str` type which returns a table with full stored data.
+
+`append(ticker:str, api:str = "YF", forceUpdate = False)` - appends the internal dictionary with the current trading data for the `ticker`. It must be a valid symbol like "AAPL", `api` must be one of "YF" or "MOEX". The information is appended only in case the internal dictionary does not yet have an entry with the same key. Otherwise, it is neither appended nor updated, which allows 
+skipping the web API calls. To force the update set `forceUpdate` to `True`.
+
+It is the recommended way to fill up the `Stocks` instance initially. The tickers in this case can come from a source that might contain duplicates. Skiping the web API calls for duplicate tickers will optimise your code for speed and minimise the impact on the API providers.
+
+The returned value is the `key` to the the internal dictionary for the record of this ticker/api pair. If the returned `key` is not stored in the calling code it can be constructed again by calling the `makeKey()` menthod. If either the supplied `ticker` or the `api` names are invalid, `append()` returns `None`.
+
+`update(ticker:str, api:str = "YF")` - same as `append()` but with `forceUpdate` set to `True`.
+
+`remove(ticker:str, api:str = "YF")` - removes the quote for the `ticker`. `ticker` and `api` are the same as when calling `append()`. If there is no entry for the ticker/api pair in the internal database, `remove()` returns silently.
+
+`maintain(interval:int)` - start updating stock quotes at regular intervals (in seconds). This method forkes a thread that keeps calling the relevant APIs and updating the internal dictionary with new data. Use `desist()` to stop.
+
+`desist()` - stop updating stock quotes.
+
+`makeKey(ticker:str, api:str = "YF")` - makes a `key` used in the internal dictionary maintained by `Stocks` to address the trading data records. Returns a `str` value of the `key`.
+
+`splitKey(key:str)` - reverses `makeKey()` and returns a tuple of `(ticker, api)`.
+
+`getCompanyName(key:str)` - obtains a long company name for the ticker used to make the `key`.
+
+`getPrice(key:str)` - obtains a `float` value of the current price for the ticker used to make the `key`.
+
+`getPriceChng(key:str)` - obtains  a `float` value of the current price change from previous close for the ticker used to make the `key`.
+
+## Final notes
+
+### Usage scenarios
+
+There are at least two scenarios the `Stocks` class was designed for.
+
+#### Static
+Add quotes with `append()` and then use them without updating. Sample code:
+	
+	import stockquotes
+
+	stocks = Stocks()
+	applKey = stocks.append("AAPL")
+	
+	print(stocks.getCompanyName(applKey), end=" ")
+	print(stocks.getPrice(applKey), end=" ")
+	print(stocks.getPriceChng(applKey))
+
+#### Dynamic
+Add quotes with `append()` and then keep them alive to use in some dymnamic way like plotting real-time price graphs or directing business logic. Sample code:
+
+	from time import sleep
+	from stockquotes import Stocks
+
+	stocks = Stocks()
+	stocks.append("AAPL")
+	stocks.append("U")
+	stocks.append("MSFT")
+
+	stocks.maintain(2) # start updating the quotes at 2 second intervals
+
+	for i in range(4):
+		sleep(2)       # wait for updates
+		if i == 2:     # replace a symbol at some point for some reason
+			stocks.remove("U")
+			stocks.append("GOOGL")
+		print(stocks)  # display updated quotes
+
+	stocks.desist()    # stop updating the quotes
+
+### Thread safety
+
+> `Stocks` class _iterator is not thread-safe_.
+
+Avoid iterating through an instance of `Stocks` class in more than one thread at a time. Use [barrier objects](https://docs.python.org/3/library/threading.html?highlight=barriers#barrier-objects) or other means of resource mutual exclusion to contol this in your code.
+
+The methods of the `Stocks` class itself do not use the implemented iterator. For instance, `maintain()` or `__str__()` methods though iterating through the records in the internal dictionary, use other means for this. You can use these methods safely in your multi-threaded applications.
