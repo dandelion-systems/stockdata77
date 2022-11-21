@@ -1,7 +1,7 @@
 """
 	This file is part of stockquotes Python module.
 
-	Copyright 2022 Dandelion Systems FZ LLC <dandelion.systems@gmail.com>
+	Copyright 2022 Dandelion Systems <dandelion.systems@gmail.com>
 
 	stockquotes is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by

@@ -3,7 +3,7 @@
 # This is a demo code for Stocks class implemented
 # in stockquotes module
 #
-# Copyright 2022 Dandelion Systems FZ LLC <dandelion.systems@gmail.com>
+# Copyright 2022 Dandelion Systems <dandelion.systems@gmail.com>
 
 from time import sleep
 from stockquotes import Stocks

@@ -1,7 +1,5 @@
 # Python interface to stock quotes providers
 
-Version 0.1 (initial release)
-
 `stockquotes` provides the `Stocks` class which facilitates interfacing with real-time information providers of securities trading data. Currently it supports APIs of Yahoo Finance and MOEX. It is designed primarily to be used with stock and ETF symbols.
 
 ## Usage summary
