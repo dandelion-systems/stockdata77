@@ -10,33 +10,17 @@ from stockquotes import Stocks
 
 # Create a database of stock quotes and fill it up
 stocks = Stocks()
-stocks.append("AAPL")
-stocks.append("U")
-stocks.append("MSFT")
+stocks.append("SQQQ", api="FMP", api_key="YOUR_API_KEY_HERE")
+stocks.append("AMZN", api="AV", api_key="YOUR_API_KEY_HERE")
+stocks.append("GMKN", "MOEX")
 
 # Start updating the quotes at 2 second intervals
 stocks.maintain(2)
 
-# Print the updated quotes every 2 seconds.
-# Replace U wth GOOGL at some point.
-# To see the changes in quotes between the 
-# printouts run this code during trading hours 
-# in New York
-for i in range(4):
+for i in range(2):
 	sleep(2)
-	if i == 2: 
-		stocks.remove("U")
-		stocks.append("GOOGL")
-	print(stocks)
 
 # Stop updating the quotes
 stocks.desist()
 
-# Get the latest quote for a specific symbol,
-# MSFT in this case
-key = stocks.makeKey("MSFT")
-if key in stocks:
-	print("Stock quote for MSFT")
-	print("Name   = " + stocks.getCompanyName(key))
-	print("Price  = {0:.2f}".format(stocks.getPrice(key)))
-	print("Change = {0:.2f}%".format(stocks.getPriceChng(key)*100))
+print(stocks)

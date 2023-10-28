@@ -21,7 +21,6 @@ import os
 from json import loads
 import xml.etree.ElementTree as xmlet
 from http.client import HTTPSConnection
-from http.client import RemoteDisconnected
 from threading import Thread
 from time import sleep
 
@@ -35,28 +34,14 @@ class Stocks:
 	call individual getXXXXXX(key) methods to obtain various 
 	components of the list.
 
-	Currently supported stock APIs are YF and MOEX.
-	"""
-
-	__apiConnYF = None
-	"""
-	__apiConnYF is a connection point for Yahoo Finance API. 
-	The YF API request will look like this:
-	https://query2.finance.yahoo.com/v10/finance/quoteSummary/TICKER?modules=price
-	"""
-	
-	__apiConnMOEX = None
-	"""
-	__apiConnMOEX is a connection point for MOEX API. 
-	The MOEX API request will look like this:
-	https://iss.moex.com/iss/engines/stock/markets/shares/securities/TICKER.xml
+	Currently supported stock APIs are FMP, ALPHA VANTAGE (AV), Yahoo Finance (YF) and MOEX.
 	"""
 
 	__stocks = {}
 	"""
 	__stocks dictionary holds the current stock quotes and other information.
 	The current version has the following format:
-	__stocks[key] = [Company_long_name:str, Current_price:float, Change_to_previous_close:float]
+	__stocks[key] = [Company_long_name:str, Current_price:float, Change_to_previous_close:float, API_key: str]
 
 	Comments:
 		Current_price is stored in the currency of the security for a nominal of 1
@@ -64,17 +49,16 @@ class Stocks:
 			i.e. the change of 2% will be stored as 0.02
 	"""
 
-	__sx_list = ("YF", "MOEX")
-	__delimiter = ":"
+	__sx_list = ("FMP", "AV", "YF", "MOEX")	# Valid API providers
+	__delimiter = ":"						# Delimiter for __stocks dictionary key, the format is TICKER:API, e.g. AAPL:FMP
 
 	__maintaining = False
 	__daemon = None
 
 	def __init__(self):
-		self.__apiConnYF = HTTPSConnection("query2.finance.yahoo.com")
-		self.__apiConnMOEX = HTTPSConnection("iss.moex.com")
+		return
 
-	def makeKey(self, ticker:str, api:str = "YF"):
+	def makeKey(self, ticker:str, api:str):
 		return ticker + self.__delimiter + api
 
 	def splitKey(self, key:str):
@@ -120,8 +104,14 @@ class Stocks:
 
 	def __contains__(self, key:str):
 		return key in self.__stocks
+	
+	def __request(self, address:str, query:str):
+		conn = HTTPSConnection(address)
+		conn.request("GET", query)
+		res = conn.getresponse()
+		return res.read().decode('utf-8')
 
-	def append(self, ticker:str, api:str = "YF", forceUpdate = False):
+	def append(self, ticker:str, api:str, api_key:str = "", force_update = False):
 		"""
 		append() appends the dictionary __stocks with the current quote 
 		for the ticker. 
@@ -132,7 +122,7 @@ class Stocks:
 		The information is appended only in case __stocks[] does not yet 
 		have an entry with the same key. Otherwise, it is neither appended 
 		nor updated, which allows to skip web API calls. To force the 
-		update set forceUpdate to True.
+		update set force_update to True.
 
 		The returned value is the key to the corresponding record 
 		in __stocks[]. If the key is not stored in the calling code it
@@ -143,77 +133,85 @@ class Stocks:
 		ticker = ticker.upper()
 		if api is None: api = ""
 		api = api.upper()
+		if api_key is None: api_key = ""
 
 		if ticker == "" or api not in self.__sx_list:
 			return None
 
 		key = self.makeKey(ticker, api)
 
-		if key in self.__stocks and not forceUpdate:
+		if key in self.__stocks and not force_update:
 			return key
 
-		company = "Error: " + ticker + " not found at " + api
+		company = ""
 		price = 0.00
 		changePercent = 0.00
 
-		match api:
-			case "YF":			
-				self.__apiConnYF.request("GET", "/v10/finance/quoteSummary/" + ticker + "?modules=price")
-				try:
-					res = self.__apiConnYF.getresponse()
-				except RemoteDisconnected:	# retry once in case the calling code was slow and the API provider dropped the connection
-					self.__apiConnYF = HTTPSConnection("query2.finance.yahoo.com")
-					self.__apiConnYF.request("GET", "/v10/finance/quoteSummary/" + ticker + "?modules=price")
-					res = self.__apiConnYF.getresponse()
+		try:
 
-				try:
-					jsonObj = loads(res.read().decode('utf-8'))
-					jsonResult = jsonObj['quoteSummary']['result']
-					if jsonResult is not None:
-						stockPriceInfo = jsonResult[0]['price']
+			match api:
+				case "FMP":
+					res = self.__request("financialmodelingprep.com", "/api/v3/quote-order/" + ticker + "?apikey=" + api_key)
+
+					json_obj = loads(res)
+					json_result = json_obj[0]
+					if json_result is not None:
+						company = json_result['name']
+						price = float(json_result['price'])
+						changePercent = float(json_result['changesPercentage']) / 100
+
+				case "AV":
+					res = self.__request("www.alphavantage.co", "/query?function=GLOBAL_QUOTE&symbol=" + ticker + "&apikey=" + api_key)
+
+					json_obj = loads(res)
+					json_result = json_obj['Global Quote']
+					if json_result is not None:
+						company = json_result['01. symbol']
+						price = float(json_result['05. price'])
+						changePercent = float(json_result['10. change percent'][:-1]) / 100
+
+				case "YF":	
+					api_key = "" # discard API key for YF
+					res = self.__request("query2.finance.yahoo.com", "/v6/finance/quoteSummary/" + ticker + "?modules=price")	
+
+					json_obj = loads(res)
+					json_result = json_obj['quoteSummary']['result']
+					if json_result is not None:
+						stockPriceInfo = json_result[0]['price']
 						if stockPriceInfo['longName'] is not None: company = stockPriceInfo['longName']
 						price = float(stockPriceInfo['regularMarketPrice']['raw'])
 						changePercent = float(stockPriceInfo['regularMarketChangePercent']['raw'])
-				except:
-					key = None
-		
-			case "MOEX":
-				self.__apiConnMOEX.request("GET", "/iss/engines/stock/markets/shares/securities/" + ticker + ".xml")
-				try:
-					res = self.__apiConnMOEX.getresponse()
-				except RemoteDisconnected:	# retry once in case the calling code was slow and the API provider dropped the connection
-					self.__apiConnMOEX = HTTPSConnection("iss.moex.com")
-					self.__apiConnMOEX.request("GET", "/iss/engines/stock/markets/shares/securities/" + ticker + ".xml")
-					res = self.__apiConnMOEX.getresponse()
+			
+				case "MOEX":
+					api_key = "" # discard API key for MOEX
+					xml_result_str = self.__request("iss.moex.com", "/iss/engines/stock/markets/shares/securities/" + ticker + ".xml")
+					xml_result_tree = xmlet.fromstring(xml_result_str)
 
-				xmlResultStr = res.read().decode('utf-8')
-				xmlResultTree = xmlet.fromstring(xmlResultStr)
-
-				for dta in xmlResultTree.findall("data"):
-					if dta.attrib["id"] == "securities":
-						for entry in dta.find("rows").findall("row"):
-							if entry.attrib["BOARDID"] == "TQBR":
-								try: 
+					is_found = False
+					for dta in xml_result_tree.findall("data"):
+						if dta.attrib["id"] == "securities":
+							for entry in dta.find("rows").findall("row"):
+								if entry.attrib["BOARDID"] == "TQBR":
 									company = entry.attrib["SECNAME"]
-								except:
-									key = None
-								break
-					if dta.attrib["id"] == "marketdata":
-						for entry in dta.find("rows").findall("row"):
-							if entry.attrib["BOARDID"] == "TQBR":
-								try: 
+									break
+						if dta.attrib["id"] == "marketdata":
+							for entry in dta.find("rows").findall("row"):
+								if entry.attrib["BOARDID"] == "TQBR":
 									price = float(entry.attrib["LAST"])
 									changePercent = float(entry.attrib["LASTTOPREVPRICE"]) / 100.00
-								except: 
-									key = None
-								break
-				
+									is_found = True
+									break
+					if not is_found:
+						key = None
+		except:
+			key = None		
+		
 		if key is not None:
-			self.__stocks[key] = [company, price, changePercent]
+			self.__stocks[key] = [company, price, changePercent, api_key]
 
 		return key
 		
-	def update(self, ticker:str, api:str = "YF"):
+	def update(self, ticker:str, api:str, api_key:str = ""):
 		"""
 		update() appends or updates __stocks[] with 
 		the current quote for the ticker. 
@@ -229,9 +227,9 @@ class Stocks:
 		can be constructed again by calling the makeKey() menthod.
 		"""
 
-		return self.append(ticker=ticker, api=api, forceUpdate=True)
+		return self.append(ticker=ticker, api=api, api_key=api_key, force_update=True)
 
-	def remove(self, ticker:str, api:str = "YF"):
+	def remove(self, ticker:str, api:str):
 		"""
 		remove() removes the quote for the ticker. 
 
@@ -250,7 +248,8 @@ class Stocks:
 			sleep(interval)
 			for key in self.__stocks.keys():
 				(ticker, api) = self.splitKey(key)
-				self.update(ticker=ticker, api=api)
+				api_key = self[key][3]
+				self.update(ticker=ticker, api=api, api_key=api_key)
 
 	def maintain(self, interval:int):
 		"""
