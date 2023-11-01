@@ -20,8 +20,6 @@ NUMARGS=$#
 REPOSITORY=$1
 MODULE=$2
 
-echo "**$REPOSITORY**  **$MODULE** **$NUMARGS**"
-
 if [ $NUMARGS -lt 2 ]; then
 	print_usage
 	exit 1
