@@ -1,6 +1,6 @@
 # Python interface to stock quotes providers
 
-`stockdata77` provides the `Stocks` class which facilitates interfacing with real-time information providers of securities trading data. Currently it supports APIs of Financial Modeling Prep, Alpha Vantage, Yahoo Finance and MOEX. Please note that FMP and AV providers will require an API key. It is designed primarily to be used with stock and ETF symbols, though FMP will also provide FOREX data.
+`stockdata77` provides `Stocks` class which facilitates interfacing with real-time information providers of securities trading data. Currently it supports APIs of Financial Modeling Prep, Alpha Vantage, Yahoo Finance and MOEX. Please note that FMP and AV providers will require an API key. It is designed primarily to be used with stock and ETF symbols, though FMP will also provide FOREX data.
 
 ## Usage summary
 
@@ -43,12 +43,11 @@ Use `maintain(interval)` to fork a thread that updates the quotes at the given i
 
 ## `Stocks` class methods
 
-> `Stocks` class does not expose any fields. Use the methods described below to obtain the necessary. In addition to these you can iterate through an instance of `Stocks`, read individual records by indexing it with a `key` (see `append()` for the explanation of keys), and cast it to `str` type which returns a table with full stored data.
+> `Stocks` class does not expose any fields. Use the methods described below to obtain the necessary. In addition to these you can iterate through an instance of `Stocks`, read individual records by indexing it with a `key` (see `append()` for the explanation of keys), and cast it to `str` type which returns a formatted text table with full stored data.
 
-`append(ticker:str, api:str, api_key:str = "", forceUpdate = False)` - appends the internal dictionary with the current trading data for the `ticker`. It must be a valid symbol like "AAPL", `api` must be one of "FMP, "AV", "YF" or "MOEX". The information is appended only in case the internal dictionary does not yet have an entry with the same key. Otherwise, it is neither appended nor updated, which allows 
-skipping the web API calls. To force the update set `forceUpdate` to `True`. It is mandatory to provide `api_key` if either "FMP" or "AV" is used.
+`append(ticker:str, api:str, api_key:str = "", forceUpdate = False)` - appends the internal dictionary with the current trading data for the `ticker`. How close it is to real-time depends on the API provider and, in case you supply `api_key`, on your subscription plan. `ticker` must be a valid symbol like "AAPL", `api` must be one of "FMP, "AV", "YF" or "MOEX". The information is appended only in case the internal dictionary does not yet have an entry with the same key. Otherwise, it is neither appended nor updated, which allows skipping web API calls. To force the update set `forceUpdate` to `True`. It is mandatory to provide `api_key` if either "FMP" or "AV" is used.
 
-It is the recommended way to fill up the `Stocks` instance initially. The tickers in this case can come from a source that might contain duplicates. Skiping the web API calls for duplicate tickers will optimise your code for speed and minimise the impact on the API providers.
+Using `append()` is the way to fill up the `Stocks` instance initially. The tickers can come from a source that might contain duplicates and sticking with `forceUpdate = False` and thus skiping web API calls for duplicate tickers will optimise your code for speed and minimise the impact on the API providers.
 
 The returned value is the `key` to the the internal dictionary for the record of this ticker/api pair. If the returned `key` is not stored in the calling code it can be constructed again by calling the `makeKey()` menthod. If either the supplied `ticker` or the `api` names are invalid, `append()` returns `None`.
 
@@ -68,32 +67,39 @@ The returned value is the `key` to the the internal dictionary for the record of
 
 `getPrice(key:str)` - obtains a `float` value of the current price for the ticker used to make the `key`.
 
-`getPriceChng(key:str)` - obtains  a `float` value of the current price change from previous close for the ticker used to make the `key`.
+`getPriceChng(key:str)` - obtains  a `float` value of the current price change from previous close for the ticker used to make the `key`. The change is stored as a fraction of the price, i.e. a change of 2% will be stored as 0.02.
 
 ## Final notes
 
 ### Usage scenarios
 
-> Note: As of October 2023 Yahoo Finance provider was not operational. The examples below use "YF" simply to avoid using `api_key` paramater.
+> Note: As of October 2023 Yahoo Finance API was not operational. The examples below use "YF" simply to avoid using `api_key` paramater.
 
 There are at least two scenarios the `Stocks` class was designed for.
 
 #### Static
 Add quotes with `append()` and then use them without updating. Sample code:
 	
-	import stockdata77
+	#!/usr/bin/env python3
+
+	from stockdata77 import Stocks
 
 	stocks = Stocks()
 	key = stocks.append("AAPL", "YF")
-	
-	print("Stock quote for AAPL")
-	print("Name   = " + stocks.getCompanyName(key))
-	print("Price  = {0:.2f}".format(stocks.getPrice(key)))
-	print("Change = {0:.2f}%".format(stocks.getPriceChng(key)*100))
+
+	if key is not None:
+		print("Stock quote for AAPL")
+		print("Name   = " + stocks.getCompanyName(key))
+		print("Price  = {0:.2f}".format(stocks.getPrice(key)))
+		print("Change = {0:.2f}%".format(stocks.getPriceChng(key)*100))
+	else:
+		print("Quote not found")
 
 #### Dynamic
-Add quotes with `append()` and then keep them alive to use in some dymnamic way like plotting real-time price graphs or directing business logic. Sample code:
+Add quotes with `append()` and then keep them alive to use in some dymnamic way like plotting real-time price graphs or directing business logic. The API provider and your subscription plan should allow real-time quotes of course. Sample code:
 
+	#!/usr/bin/env python3
+	
 	from time import sleep
 	from stockdata77 import Stocks
 
@@ -112,6 +118,8 @@ Add quotes with `append()` and then keep them alive to use in some dymnamic way 
 		print(stocks)  # display updated quotes
 
 	stocks.desist()    # stop updating the quotes
+
+	print(stocks)
 
 ### Thread safety
 

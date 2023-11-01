@@ -18,7 +18,7 @@ classifiers = [
 ]
 keywords = [
 	"stocks", "trading",
-    "NYSE", "Nasdaq", "FMP", "AV", "Alpha Vantage",
+  "NYSE", "Nasdaq", "FMP", "AV", "Alpha Vantage",
 	"Yahoo Finance", "MOEX"
 ]
 
