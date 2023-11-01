@@ -4,7 +4,7 @@
 
 ## Usage summary
 
-`Stocks` class creates and maintains a dictionary of traded securities quotes. Stored values are security long name, current price and the change to previous close. The price is stored in the currency of the security for a nominal of 1. The change is stored as a fraction of the price, i.e. a change of 2% will be stored as 0.02.
+`Stocks` class creates and maintains a dictionary of traded securities quotes. Stored values are security long name, current price and change to previous close. The price is stored in the currency of the security for a nominal of 1. The change is stored as a fraction of the price, i.e. a change of 2% will be stored as 0.02.
 
 Use `append(ticker, api)` method to fill it with individual stock quotes. 
 
