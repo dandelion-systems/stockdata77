@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "stockdata"
+name = "stockdata77"
 version = "0.0.2"
 authors = [
   { name="Dandelion Systems", email="dandelion.systems@gmail.com" },
@@ -23,5 +23,5 @@ keywords = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/dandelion-systems/stockdata"
-"Bug Tracker" = "https://github.com/dandelion-systems/stockdata/issues"
+"Homepage" = "https://github.com/dandelion-systems/stockdata77"
+"Bug Tracker" = "https://github.com/dandelion-systems/stockdata77/issues"

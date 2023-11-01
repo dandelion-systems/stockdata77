@@ -8,7 +8,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from time import sleep
-from stockdata import Stocks
+from stockdata77 import Stocks
 
 # Create a database of stock quotes and fill it up
 stocks = Stocks()
