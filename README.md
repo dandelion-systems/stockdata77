@@ -1,6 +1,6 @@
 # Python interface to stock quotes providers
 
-`stockquotes` provides the `Stocks` class which facilitates interfacing with real-time information providers of securities trading data. Currently it supports APIs of Financial Modeling Prep, Alpha Vantage, Yahoo Finance and MOEX. Please note that FMP and AV providers will require an API key. It is designed primarily to be used with stock and ETF symbols, though FMP will also provide FOREX data.
+`stockdata` provides the `Stocks` class which facilitates interfacing with real-time information providers of securities trading data. Currently it supports APIs of Financial Modeling Prep, Alpha Vantage, Yahoo Finance and MOEX. Please note that FMP and AV providers will require an API key. It is designed primarily to be used with stock and ETF symbols, though FMP will also provide FOREX data.
 
 ## Usage summary
 
@@ -15,7 +15,7 @@ get you the `key`. Or you can simply store the value returned by `append()` or `
 
 The instances of the `Stocks` class are iterable. Trying this code
 
-	import stockquotes
+	import stockdata
 
 	stocks = Stocks()
 	stocks.append("AAPL")
@@ -81,7 +81,7 @@ There are at least two scenarios the `Stocks` class was designed for.
 #### Static
 Add quotes with `append()` and then use them without updating. Sample code:
 	
-	import stockquotes
+	import stockdata
 
 	stocks = Stocks()
 	key = stocks.append("AAPL", "YF")
@@ -95,7 +95,7 @@ Add quotes with `append()` and then use them without updating. Sample code:
 Add quotes with `append()` and then keep them alive to use in some dymnamic way like plotting real-time price graphs or directing business logic. Sample code:
 
 	from time import sleep
-	from stockquotes import Stocks
+	from stockdata import Stocks
 
 	stocks = Stocks()
 	stocks.append("AAPL", "YF")

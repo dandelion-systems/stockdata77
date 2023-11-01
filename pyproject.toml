@@ -3,12 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "stockquotes"
+name = "stockdata"
 version = "0.0.2"
 authors = [
   { name="Dandelion Systems", email="dandelion.systems@gmail.com" },
 ]
-description = "Interface to real-time providers of securities trading data"
+description = "Interface to providers of securities trading data"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
@@ -18,11 +18,10 @@ classifiers = [
 ]
 keywords = [
 	"stocks", "trading",
-    "NYSE", "Nasdaq",
-	"Yahoo Finance", "MOEX",
-    "real-time price"
+    "NYSE", "Nasdaq", "FMP", "AV", "Alpha Vantage",
+	"Yahoo Finance", "MOEX"
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/dandelion-systems/stockquotes"
-"Bug Tracker" = "https://github.com/dandelion-systems/stockquotes/issues"
+"Homepage" = "https://github.com/dandelion-systems/stockdata"
+"Bug Tracker" = "https://github.com/dandelion-systems/stockdata/issues"

@@ -4,9 +4,11 @@
 # in stockquotes module
 #
 # Copyright 2022 Dandelion Systems <dandelion.systems@gmail.com>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 from time import sleep
-from stockquotes import Stocks
+from stockdata import Stocks
 
 # Create a database of stock quotes and fill it up
 stocks = Stocks()
