@@ -1,1 +1,7 @@
+# temporary stuff
+/__pycache__
+t.py
+/.vscode
+
+# package distribution
 /dist

@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
-
 # This is a demo code for Stocks class implemented
 # in stockquotes module
 #
 # Copyright 2022 Dandelion Systems <dandelion.systems@gmail.com>
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 from time import sleep
 from stockdata77 import Stocks
