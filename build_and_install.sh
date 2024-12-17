@@ -4,13 +4,14 @@
 # Copyright 2023 Dandelion Systems <dandelion.systems@gmail.com>
 # SPDX-License-Identifier: MIT
 
-# Extra things we need to do due to latest changes in how python modules are 
-# managed in Debian. 
+# Things to mind before running this script 
 # 1. Make sure python3-build and twine packages are installed, if not - install them
 # 2. twine requires pkginfo version =>1.10 otherwise this script will fail with 
 #    InvalidDistribution error, see https://github.com/pypa/twine/issues/1070
-# 3. Change the 'python3 -m pip install' lines to '~/venv/bin/pip install'
-# 4. Install other dependencies in the same way. For stockdata77 this specifically means 
+# 3. Check if a venv is created for the current user, if not - create it, say under ~/venv
+# 4. If your venv is already created and it is not in ~/venv, change 
+#    lines '~/venv/bin/pip install' to correspond to your venv location
+# 5. Install other dependencies in the same way. For stockdata77 this specifically means 
 #    adding '~/venv/bin/pip install openpyxl'
 
 function print_usage() {

@@ -6,7 +6,7 @@
 	stockdata77 is free software; you can redistribute it and/or modify
 	it under the terms of the MIT License.
 
-	mediameta is distributed in the hope that it will be useful, but
+	stockdata77 is distributed in the hope that it will be useful, but
 	WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 	See the MIT License for more details.
