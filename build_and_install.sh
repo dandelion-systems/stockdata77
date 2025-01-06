@@ -50,15 +50,15 @@ fi
 case "$REPOSITORY" in
 	"testpypi")
 		echo "Building and uploading to testpypi.org"
-		python3 -m build
-		python3 -m twine upload --repository testpypi dist/*
+		~/venv/bin/python3 -m build
+		~/venv/bin/python3 -m twine upload --repository testpypi dist/*
 		echo "Installing new package $MODULE"
 		~/venv/bin/pip install --index-url https://test.pypi.org/simple/ --no-deps --upgrade $MODULE
 		;;
 	"pypi")
 		echo "Building and uploading to pypi.org"
-		python3 -m build
-		python3 -m twine upload --repository pypi dist/*
+		~/venv/bin/python3 -m build
+		~/venv/bin/python3 -m twine upload --repository pypi dist/*
 		echo "Installing new package $MODULE"
 		~/venv/bin/pip install --index-url https://pypi.org/simple/ --no-deps --upgrade $MODULE
 		;;
