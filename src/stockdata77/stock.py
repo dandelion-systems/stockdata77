@@ -31,7 +31,7 @@ class Stocks:
 	call individual getXXXXXX(key) methods to obtain various 
 	components of the list.
 
-	Currently supported stock APIs are FMP, ALPHA VANTAGE (AV), Yahoo Finance (YF) and MOEX.
+	Currently supported stock APIs are FMP, ALPHA VANTAGE (AV), Yahoo Finance (YF) and MOEX / MOEXBONDS.
 	"""
 
 	__stocks = {}
@@ -46,7 +46,7 @@ class Stocks:
 			i.e. the change of 2% will be stored as 0.02
 	"""
 
-	__sx_list = ("FMP", "AV", "YF", "MOEX")	# Valid API providers
+	__sx_list = ("FMP", "AV", "YF", "MOEX", "MOEXBONDS")	# Valid API providers
 	__delimiter = ":"						# Delimiter for __stocks dictionary key, the format is TICKER:API, e.g. AAPL:FMP
 
 	__maintaining = False
@@ -196,6 +196,28 @@ class Stocks:
 								if entry.attrib["BOARDID"] == "TQBR":
 									price = float(entry.attrib["LAST"])
 									changePercent = float(entry.attrib["LASTTOPREVPRICE"]) / 100.00
+									is_found = True
+									break
+					if not is_found:
+						key = None
+			
+				case "MOEXBONDS":
+					api_key = "" # discard API key for MOEXBONDS
+					xml_result_str = self.__request("iss.moex.com", "/iss/engines/stock/markets/bonds/securities/" + ticker + ".xml")
+					xml_result_tree = xmlet.fromstring(xml_result_str)
+
+					is_found = False
+					for dta in xml_result_tree.findall("data"):
+						if dta.attrib["id"] == "securities":
+							for entry in dta.find("rows").findall("row"):
+								if entry.attrib["BOARDID"] == "TQCB":
+									company = entry.attrib["SECNAME"]
+									break
+						if dta.attrib["id"] == "marketdata":
+							for entry in dta.find("rows").findall("row"):
+								if entry.attrib["BOARDID"] == "TQCB":
+									price = float(entry.attrib["LAST"]) / 100.00
+									changePercent = float(entry.attrib["LASTCHANGE"]) / 100.00
 									is_found = True
 									break
 					if not is_found:
