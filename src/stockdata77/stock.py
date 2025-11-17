@@ -87,15 +87,23 @@ class Stocks:
 			raise StopIteration
 
 	def __str__(self):
-		result =  "TICKER".ljust(12," ") + "NAME".ljust(20, " ") + "PRICE".ljust(8, " ") + " CHANGE".ljust( 8, " ") + os.linesep
-		result +=       "".ljust(11,"-") +    " ".ljust(20, "-") +     " ".ljust(9, "-") +       " ".ljust(10, "-") + os.linesep
+		result =  "TICKER".ljust(20," ") + "NAME".ljust(20, " ") + "PRICE".ljust(9, " ") + "CHANGE".ljust(10, " ") + "API".ljust(10, " ") + os.linesep
+		result +=       "".ljust(19,"-") +    " ".ljust(20, "-") +     " ".ljust(9, "-") +      " ".ljust(10, "-") +   " ".ljust(10, "-") + os.linesep
 
 		for key in self.__stocks.keys():
-			trucatedName = self.getCompanyName(key)
-			if len(trucatedName) > 15: trucatedName = trucatedName[:15] + "..."
+			truncatedKey = key.split(self.__delimiter)[0]
+			if len(truncatedKey) > 19: truncatedKey = truncatedKey[:16] + "..."
+			truncatedName = self.getCompanyName(key)
+			if len(truncatedName) > 19: truncatedName = truncatedName[:16] + "..."
+			truncatedAPI = API = key.split(self.__delimiter)[1]
+			if len(truncatedAPI) > 9: truncatedAPI = truncatedAPI[:6] + "..."
 
-			result += key.ljust(12," ") + trucatedName.ljust(20, " ") 
-			result += "{0:8.2f} {1:8.2f}%".format(self.getPrice(key), 100*self.getPriceChng(key)) + os.linesep
+			result += truncatedKey.ljust(20," ") + truncatedName.ljust(20, " ") 
+			if API == "MOEXBONDS":
+				result += "{0:7.2f}% {1:8.2f}% ".format(100*self.getPrice(key), 100*self.getPriceChng(key))
+			else:
+				result += "{0:8.2f} {1:8.2f}% ".format(self.getPrice(key), 100*self.getPriceChng(key))
+			result += truncatedAPI.ljust(8," ") + os.linesep
 		
 		return result
 
@@ -202,6 +210,9 @@ class Stocks:
 						key = None
 			
 				case "MOEXBONDS":
+					# samples:
+					# https://iss.moex.com/iss/engines/stock/markets/bonds/securities/SU26248RMFS3.xml
+					# https://iss.moex.com/iss/engines/stock/markets/bonds/securities/RU000A106LL5.xml
 					api_key = "" # discard API key for MOEXBONDS
 					xml_result_str = self.__request("iss.moex.com", "/iss/engines/stock/markets/bonds/securities/" + ticker + ".xml")
 					xml_result_tree = xmlet.fromstring(xml_result_str)
@@ -210,13 +221,13 @@ class Stocks:
 					for dta in xml_result_tree.findall("data"):
 						if dta.attrib["id"] == "securities":
 							for entry in dta.find("rows").findall("row"):
-								if entry.attrib["BOARDID"] == "TQCB":
+								if entry.attrib["BOARDID"] in ("TQCB", "TQOB"):
 									company = entry.attrib["SECNAME"]
 									break
 						if dta.attrib["id"] == "marketdata":
 							for entry in dta.find("rows").findall("row"):
-								if entry.attrib["BOARDID"] == "TQCB":
-									price = float(entry.attrib["LAST"]) / 100.00
+								if entry.attrib["BOARDID"] in ("TQCB", "TQOB"):
+									price = float(entry.attrib["MARKETPRICE"]) / 100.00
 									changePercent = float(entry.attrib["LASTCHANGE"]) / 100.00
 									is_found = True
 									break

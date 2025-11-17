@@ -34,10 +34,10 @@ Attempting to cast the whole instance to `str` type will get you a formatted tab
 
 to the example above will get you this:
 
-	TICKER      NAME                PRICE    CHANGE 
-	----------- ------------------- -------- ---------
-	AAPL:YF     Apple Inc.            155.74     7.56%
-	U:YF        Unity Software ...     29.23     4.84%
+	TICKER              NAME                PRICE    CHANGE    API
+	------------------- ------------------- -------- --------- ---------
+	AAPL                Apple Inc.            155.74     7.56% YF
+	U                   Unity Software ...     29.23     4.84% YF
 
 Use `maintain(interval)` to fork a thread that updates the quotes at the given intervals in seconds. Invoking `desist()` will stop the updates. See the included `sample_cli.py` script for an example.
 
