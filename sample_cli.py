@@ -10,17 +10,18 @@ from stockdata77 import Stocks
 
 # Create a database of stock quotes and fill it up
 stocks = Stocks()
-stocks.append("SQQQ", api="FMP", api_key="YOUR_API_KEY_HERE")
-stocks.append("AMZN", api="AV", api_key="YOUR_API_KEY_HERE")
-stocks.append("GMKN", "MOEX")
+stocks.append("TSLA", api="FMP", api_key="YOUR_FMP_API_KEY_HERE")
+stocks.append("NVDA", api="AV", api_key="YOUR_AV_API_KEY_HERE")
+stocks.append("SBER", "MOEX")
+
+print(stocks)
 
 # Start updating the quotes at 2 second intervals
 stocks.maintain(2)
 
-for i in range(2):
+for i in range(10):
 	sleep(2)
+	print(stocks)
 
 # Stop updating the quotes
 stocks.desist()
-
-print(stocks)

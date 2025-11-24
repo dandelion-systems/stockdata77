@@ -156,14 +156,14 @@ class Stocks:
 
 			match api:
 				case "FMP":
-					res = self.__request("financialmodelingprep.com", "/api/v3/quote-order/" + ticker + "?apikey=" + api_key)
+					res = self.__request("financialmodelingprep.com", "/stable/quote?symbol=" + ticker + "&apikey=" + api_key)
 
 					json_obj = loads(res)
 					json_result = json_obj[0]
 					if json_result is not None:
 						company = json_result['name']
 						price = float(json_result['price'])
-						changePercent = float(json_result['changesPercentage']) / 100
+						changePercent = float(json_result['changePercentage']) / 100
 
 				case "AV":
 					res = self.__request("www.alphavantage.co", "/query?function=GLOBAL_QUOTE&symbol=" + ticker + "&apikey=" + api_key)
