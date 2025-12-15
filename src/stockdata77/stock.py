@@ -31,7 +31,7 @@ class Stocks:
 	call individual getXXXXXX(key) methods to obtain various 
 	components of the list.
 
-	Currently supported stock APIs are FMP, ALPHA VANTAGE (AV), Yahoo Finance (YF) and MOEX / MOEXBONDS.
+	Currently supported stock APIs are FMP, ALPHA VANTAGE (AV) and MOEX / MOEXBONDS.
 	"""
 
 	__stocks = {}
@@ -46,7 +46,7 @@ class Stocks:
 			i.e. the change of 2% will be stored as 0.02
 	"""
 
-	__sx_list = ("FMP", "AV", "YF", "MOEX", "MOEXBONDS")	# Valid API providers
+	__sx_list = ("FMP", "AV", "MOEX", "MOEXBONDS")	# Valid API providers
 	__delimiter = ":"						# Delimiter for __stocks dictionary key, the format is TICKER:API, e.g. AAPL:FMP
 
 	__maintaining = False
@@ -174,20 +174,10 @@ class Stocks:
 						company = json_result['01. symbol']
 						price = float(json_result['05. price'])
 						changePercent = float(json_result['10. change percent'][:-1]) / 100
-
-				case "YF":	
-					api_key = "" # discard API key for YF
-					res = self.__request("query2.finance.yahoo.com", "/v6/finance/quoteSummary/" + ticker + "?modules=price")	
-
-					json_obj = loads(res)
-					json_result = json_obj['quoteSummary']['result']
-					if json_result is not None:
-						stockPriceInfo = json_result[0]['price']
-						if stockPriceInfo['longName'] is not None: company = stockPriceInfo['longName']
-						price = float(stockPriceInfo['regularMarketPrice']['raw'])
-						changePercent = float(stockPriceInfo['regularMarketChangePercent']['raw'])
 			
 				case "MOEX":
+					# sample:
+					# https://iss.moex.com/iss/engines/stock/markets/shares/securities/X5.xml
 					api_key = "" # discard API key for MOEX
 					xml_result_str = self.__request("iss.moex.com", "/iss/engines/stock/markets/shares/securities/" + ticker + ".xml")
 					xml_result_tree = xmlet.fromstring(xml_result_str)
@@ -202,7 +192,8 @@ class Stocks:
 						if dta.attrib["id"] == "marketdata":
 							for entry in dta.find("rows").findall("row"):
 								if entry.attrib["BOARDID"] == "TQBR":
-									price = float(entry.attrib["LAST"])
+									api_price = entry.attrib["MARKETPRICE"] if entry.attrib["LAST"] == "" else entry.attrib["LAST"]
+									price = float(api_price)
 									changePercent = float(entry.attrib["LASTTOPREVPRICE"]) / 100.00
 									is_found = True
 									break
@@ -223,12 +214,14 @@ class Stocks:
 							for entry in dta.find("rows").findall("row"):
 								if entry.attrib["BOARDID"] in ("TQCB", "TQOB"):
 									company = entry.attrib["SECNAME"]
+									price = float(entry.attrib["PREVPRICE"]) / 100.0 # previous day's close
 									break
 						if dta.attrib["id"] == "marketdata":
 							for entry in dta.find("rows").findall("row"):
 								if entry.attrib["BOARDID"] in ("TQCB", "TQOB"):
-									price = float(entry.attrib["MARKETPRICE"]) / 100.00
-									changePercent = float(entry.attrib["LASTCHANGE"]) / 100.00
+									if entry.attrib["LAST"] != "":                   # this will be empty on a non trading day, in which case
+										price = float(entry.attrib["LAST"]) / 100.00 # we have `price` assigned to previous day's close
+									changePercent = float(entry.attrib["LASTTOPREVPRICE"]) / 100.00
 									is_found = True
 									break
 					if not is_found:

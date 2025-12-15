@@ -1,6 +1,8 @@
 # Python interface to stock quotes providers
 
-`stockdata77` provides `Stocks` class which facilitates interfacing with real-time information providers of securities trading data. Currently it supports APIs of Financial Modeling Prep, Alpha Vantage, Yahoo Finance and MOEX. Please note that FMP and AV providers will require an API key. It is designed primarily to be used with stock and ETF symbols, though FMP will also provide FOREX data.
+`stockdata77` provides `Stocks` class which facilitates interfacing with real-time information providers of securities trading data. Currently it supports APIs of Financial Modeling Prep, Alpha Vantage and MOEX. It is designed primarily to be used with stock, bonds and ETF symbols, though FMP will also provide FOREX data.
+
+Please note that FMP and AV providers will require an API key. Also note that Yahoo Finance API support has been discontinued since version 0.0.5 as the provider has closed access to its API.
 
 ## Usage summary
 
@@ -18,15 +20,15 @@ The instances of the `Stocks` class are iterable. Trying this code
 	import stockdata77
 
 	stocks = Stocks()
-	stocks.append("AAPL")
-	stocks.append("U")
+	stocks.append(ticker="TSLA", api="AV", api_key="YOUR_API_KEY_HERE")
+	stocks.append(ticker="NVDA", api="AV", api_key="YOUR_API_KEY_HERE")
 	for entry in stocks:
 		print(entry)
 
 will print tuples of `(key, [name, price, change])` like this:
 
-	('AAPL:YF', ['Apple Inc.', 155.74, 0.0755525])
-	('U:YF', ['Unity Software Inc.', 29.23, 0.048421822])
+	('TSLA:AV', ['TSLA', 417.78, 0.068245, 'YOUR_API_KEY_HERE'])
+	('NVDA:AV', ['NVDA', 182.55, 0.020516999999999997, 'YOUR_API_KEY_HERE'])
 
 Attempting to cast the whole instance to `str` type will get you a formatted table with the current quotes. For instance appending 
 
@@ -34,18 +36,20 @@ Attempting to cast the whole instance to `str` type will get you a formatted tab
 
 to the example above will get you this:
 
-	TICKER              NAME                PRICE    CHANGE    API
+	TICKER              NAME                PRICE    CHANGE    API       
 	------------------- ------------------- -------- --------- ---------
-	AAPL                Apple Inc.            155.74     7.56% YF
-	U                   Unity Software ...     29.23     4.84% YF
+	TSLA                TSLA                  417.78     6.82% AV      
+	NVDA                NVDA                  182.55     2.05% AV 
+
+Company NAME in the examples above is the same as the stock symbol beacause of the API provider used. Other providers like FMP and MOEX will give full company names.
 
 Use `maintain(interval)` to fork a thread that updates the quotes at the given intervals in seconds. Invoking `desist()` will stop the updates. See the included `sample_cli.py` script for an example.
 
 ## `Stocks` class methods
 
-> `Stocks` class does not expose any fields. Use the methods described below to obtain the necessary. In addition to these you can iterate through an instance of `Stocks`, read individual records by indexing it with a `key` (see `append()` for the explanation of keys), and cast it to `str` type which returns a formatted text table with full stored data.
+> `Stocks` class does not expose any fields. Use the methods described below to obtain the necessary. In addition to these you can iterate through an instance of `Stocks`, read individual records by indexing it with a `key` (see `append()` for the explanation of keys), and cast it to `str` type which returns a formatted text table with full stored data primarily for debugging purposes.
 
-`append(ticker:str, api:str, api_key:str = "", forceUpdate = False)` - appends the internal dictionary with the current trading data for the `ticker`. How close it is to real-time depends on the API provider and, in case you supply `api_key`, on your subscription plan. `ticker` must be a valid symbol like "AAPL", `api` must be one of "FMP, "AV", "YF" or "MOEX". The information is appended only in case the internal dictionary does not yet have an entry with the same key. Otherwise, it is neither appended nor updated, which allows skipping web API calls. To force the update set `forceUpdate` to `True`. It is mandatory to provide `api_key` if either "FMP" or "AV" is used.
+`append(ticker:str, api:str, api_key:str = "", forceUpdate = False)` - appends the internal dictionary with the current trading data for the `ticker`. How close it is to real-time depends on the API provider and, in case you supply `api_key`, on your subscription plan. `ticker` must be a valid symbol like "AAPL", `api` must be one of "FMP, "AV", "MOEX" or "MOEXBONDS". The information is appended only in case the internal dictionary does not yet have an entry with the same key. Otherwise, it is neither appended nor updated, which allows skipping web API calls. To force the update set `forceUpdate` to `True`. It is mandatory to provide `api_key` if either "FMP" or "AV" is used.
 
 Using `append()` is the way to fill up the `Stocks` instance initially. The tickers can come from a source that might contain duplicates and sticking with `forceUpdate = False` and thus skiping web API calls for duplicate tickers will optimise your code for speed and minimise the impact on the API providers.
 
@@ -53,9 +57,9 @@ The returned value is the `key` to the the internal dictionary for the record of
 
 `update(ticker:str, api:str, api_key:str = "")` - same as `append()` but with `forceUpdate` set to `True`.
 
-`remove(ticker:str, api:str)` - removes the quote for the `ticker`. `ticker` and `api` are the same as when calling `append()`. If there is no entry for the ticker/api pair in the internal database, `remove()` returns silently.
+`remove(ticker:str, api:str)` - removes the quote for the `ticker`. The supplied `ticker` and `api` are the same as when calling `append()`. If there is no entry for the ticker/api pair in the internal database, `remove()` returns silently.
 
-`maintain(interval:int)` - start updating stock quotes at regular intervals (in seconds). This method forks a thread that keeps calling the relevant APIs and updating the internal dictionary with new data. Use `desist()` to stop.
+`maintain(interval:int)` - start updating stock quotes at regular intervals (in seconds). This method forks a thread that keeps calling the relevant APIs and updating the internal dictionary with new data. Use `desist()` to stop. Mind that your API provider may impose limits on the number of calls per a period of time. Such quotas will usually depend on your subscription plan, so make sure you do not exhaust it while debugging.
 
 `desist()` - stop updating stock quotes.
 
@@ -73,7 +77,7 @@ The returned value is the `key` to the the internal dictionary for the record of
 
 ### Usage scenarios
 
-> Note: As of October 2023 Yahoo Finance API was not operational. The examples below use "YF" simply to avoid using `api_key` paramater.
+> Note: The examples below use "AV" simply to avoid using a specific `api_key` paramater as AV API works without errors with just something like "KEY" for demo purposes.
 
 There are at least two scenarios the `Stocks` class was designed for.
 
@@ -85,7 +89,7 @@ Add quotes with `append()` and then use them without updating. Sample code:
 	from stockdata77 import Stocks
 
 	stocks = Stocks()
-	key = stocks.append("AAPL", "YF")
+	key = stocks.append("AAPL", "AV", "KEY")
 
 	if key is not None:
 		print("Stock quote for AAPL")
@@ -104,22 +108,19 @@ Add quotes with `append()` and then keep them alive to use in some dymnamic way 
 	from stockdata77 import Stocks
 
 	stocks = Stocks()
-	stocks.append("AAPL", "YF")
-	stocks.append("U", "YF")
-	stocks.append("MSFT", "YF")
+	stocks.append("AAPL", "AV", "KEY")
+	stocks.append("U", "AV", "KEY")
+	stocks.append("MSFT", "AV", "KEY")
+
+	print(stocks)
 
 	stocks.maintain(2) # start updating the quotes at 2 second intervals
 
 	for i in range(4):
 		sleep(2)       # wait for updates
-		if i == 2:     # replace a symbol at some point for some reason
-			stocks.remove("U", "YF")
-			stocks.append("GOOGL", "YF")
 		print(stocks)  # display updated quotes
 
 	stocks.desist()    # stop updating the quotes
-
-	print(stocks)
 
 ### Thread safety
 

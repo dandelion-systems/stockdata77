@@ -8,19 +8,21 @@
 # 1. Make sure python3-build and twine packages are installed, if not - install them
 # 2. twine requires pkginfo version =>1.10 otherwise this script will fail with 
 #    InvalidDistribution error, see https://github.com/pypa/twine/issues/1070
-# 3. Check if a venv is created for the current user, if not - create it, say under ~/venv
-# 4. If your venv is already created and it is not in ~/venv, change 
-#    lines '~/venv/bin/pip install' to correspond to your venv location
-# 5. Install other dependencies in the same way. For stockdata77 this specifically means 
-#    adding '~/venv/bin/pip install openpyxl'
+# 3. Normally this module should be installen in a Python venv, but if this parameter
+#    is omitted the script will attempt to install it system-wide
+# 4. Install other dependencies in the same venv.
+# 5. When using the testpypi repository, there may be a delay before the package 
+#    becomes available for installation after it gets uploaded. So you may find you 
+#    still get the old version of the package after successfuly uploading a new one.
 
 function print_usage() {
 	echo ""
-	echo "Usage: ./build_and_install.sh REPOSITORY MODULE"
+	echo "Usage: ./build_and_install.sh REPOSITORY MODULE [VENV]"
 	echo ""
 	echo "Where:"
 	echo "	REPOSITORY	- either testpypi or pypi"
 	echo "	MODULE 		- module name"
+	echo "	VENV 		- full path to Python venv"
 	echo ""
 	echo "pyproject.toml file must be in the same directory as this script."
 	echo "The supplied MODULE name must match the 'name =' string in the "
@@ -32,6 +34,7 @@ function print_usage() {
 NUMARGS=$#
 REPOSITORY=$1
 MODULE=$2
+VENV=$3
 
 if [ $NUMARGS -lt 2 ]; then
 	print_usage
@@ -47,20 +50,26 @@ if [ "$PROJECTNAME" != "$MODULE" ]; then
 	exit 1
 fi
 
+if [ "$VENV" != "" ]; then
+	source $VENV/bin/activate
+fi
+
+rm ./dist/$MODULE*
+
 case "$REPOSITORY" in
 	"testpypi")
 		echo "Building and uploading to testpypi.org"
-		~/venv/bin/python3 -m build
-		~/venv/bin/python3 -m twine upload --repository testpypi dist/*
+		python3 -m build
+		python3 -m twine upload --repository testpypi dist/*
 		echo "Installing new package $MODULE"
-		~/venv/bin/pip install --index-url https://test.pypi.org/simple/ --no-deps --upgrade $MODULE
+		pip install --index-url https://test.pypi.org/simple/ --no-deps --upgrade $MODULE
 		;;
 	"pypi")
 		echo "Building and uploading to pypi.org"
-		~/venv/bin/python3 -m build
-		~/venv/bin/python3 -m twine upload --repository pypi dist/*
+		python3 -m build
+		python3 -m twine upload --repository pypi dist/*
 		echo "Installing new package $MODULE"
-		~/venv/bin/pip install --index-url https://pypi.org/simple/ --no-deps --upgrade $MODULE
+		pip install --index-url https://pypi.org/simple/ --no-deps --upgrade $MODULE
 		;;
 	*)
 		print_usage

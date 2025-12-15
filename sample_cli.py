@@ -8,20 +8,18 @@
 from time import sleep
 from stockdata77 import Stocks
 
-# Create a database of stock quotes and fill it up
-stocks = Stocks()
-stocks.append("TSLA", api="FMP", api_key="YOUR_FMP_API_KEY_HERE")
-stocks.append("NVDA", api="AV", api_key="YOUR_AV_API_KEY_HERE")
-stocks.append("SBER", "MOEX")
+stocks = Stocks() # create a database of stock quotes and fill it up
+stocks.append("AAPL", "AV", "KEY")
+stocks.append("U", "AV", "KEY")
+stocks.append("MSFT", "AV", "KEY")
 
 print(stocks)
 
-# Start updating the quotes at 2 second intervals
-stocks.maintain(2)
+stocks.maintain(2) # start updating the quotes at 2 second intervals
 
-for i in range(10):
-	sleep(2)
-	print(stocks)
+for i in range(4):
+	sleep(2)       # wait for updates
+	print(stocks)  # display updated quotes
 
-# Stop updating the quotes
-stocks.desist()
+stocks.desist()    # stop updating the quotes
+

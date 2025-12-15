@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "stockdata77"
-version = "0.0.4"
+version = "0.0.5"
 authors = [
   { name="Dandelion Systems", email="dandelion.systems@gmail.com" },
 ]
@@ -18,7 +18,7 @@ classifiers = [
 ]
 license = {file = "LICENSE"}
 keywords = [
-	"stocks", "trading", "NYSE", "Nasdaq", "FMP", "AV", "Alpha Vantage", "Yahoo Finance", "MOEX"
+	"stocks", "trading", "NYSE", "Nasdaq", "FMP", "AV", "Alpha Vantage", "MOEX"
 ]
 
 [project.urls]
